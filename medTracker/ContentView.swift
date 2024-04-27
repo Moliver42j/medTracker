@@ -1,16 +1,26 @@
 import SwiftUI
+import UserNotifications
 
 struct Medication: Codable, Identifiable {
     var id = UUID()
     var name: String
     var dose: String
-    var frequency: String
+    var frequency: Frequency
+    var time: Date
+}
+
+enum Frequency: String, Codable, CaseIterable {
+    case daily = "Daily"
+    case weekly = "Weekly"
+    case monthly = "Monthly"
 }
 
 struct ContentView: View {
     @State private var name: String = ""
     @State private var dose: String = ""
-    @State private var frequency: String = ""
+    @State private var frequency: Frequency = .daily
+    @State private var selectedDateTime = Date()
+    @State private var howOften: Int = 1
     @State private var medications: [Medication] = []
 
     var body: some View {
@@ -18,43 +28,42 @@ struct ContentView: View {
             Form {
                 Section {
                     TextField("Name", text: $name)
-                        .textFieldStyle(PlainTextFieldStyle()) // make the text editable
+                        .textFieldStyle(PlainTextFieldStyle())
                     TextField("Dose", text: $dose)
-                        .textFieldStyle(PlainTextFieldStyle()) // make the text editable
-                    TextField("Frequency", text: $frequency)
-                        .textFieldStyle(PlainTextFieldStyle()) // make the text editable
+                        .textFieldStyle(PlainTextFieldStyle())
+                    HStack {
+                        Text("Frequency")
+                        Picker("Frequency", selection: $frequency) {
+                            ForEach(Frequency.allCases, id: \.self) { frequency in
+                                Text(frequency.rawValue)
+                            }
+                        }
+                        .pickerStyle(SegmentedPickerStyle())
+                    }
+                    DatePicker("Start Date & Time", selection: $selectedDateTime, displayedComponents: [.date, .hourAndMinute])
+                    Stepper(value: $howOften, in: 1...30) {
+                        Text("How often: \(howOften)")
+                    }
                 }
                 Section {
                     Button(action: {
-                        // add the new medication to the list
-                        let newMedication = Medication(name: self.name, dose: self.dose, frequency: self.frequency)
-                        self.medications.append(newMedication)
-                        // clear text fields after adding
-                        self.name = ""
-                        self.dose = ""
-                        self.frequency = ""
-                        // save medications as JSON
-                        self.saveMedications()
+                        addMedication()
                     }) {
                         Text("Add Medication")
                     }
                 }
-            }
-            
-            List {
-                ForEach(medications) { medication in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(medication.name)
-                            Text("Dose: \(medication.dose)")
-                            Text("Frequency: \(medication.frequency)")
-                        }
-                        Spacer()
-                        Button(action: {
-                            self.deleteMedication(medication)
-                        }) {
-                            Image(systemName: "trash")
-                                .foregroundColor(.red)
+                List(medications) { medication in
+                    VStack(alignment: .leading) {
+                        Text(medication.name).font(.headline)
+                        Text("Dose: \(medication.dose)")
+                        Text("Frequency: \(medication.frequency.rawValue)")
+                        Text("Time: \(medication.time, formatter: dateFormatter)")
+                    }
+                    .swipeActions {
+                        Button(role: .destructive) {
+                            deleteMedication(medication)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
                         }
                     }
                 }
@@ -62,36 +71,57 @@ struct ContentView: View {
         }
         .padding()
         .onAppear {
-            // Load medications from JSON file when ContentView appears
-            self.loadMedications()
+            loadMedications()
+            NotificationManager.shared.requestNotificationPermission()
+            NotificationManager.shared.addNotificationActions()
         }
     }
-    
+
+    private func addMedication() {
+        let newMedication = Medication(name: self.name, dose: self.dose, frequency: self.frequency, time: self.selectedDateTime)
+        self.medications.append(newMedication)
+        saveMedications()
+        NotificationManager.shared.scheduleNotification(for: newMedication)
+        clearInputFields()
+    }
+
+    private func deleteMedication(_ medication: Medication) {
+        self.medications.removeAll { $0.id == medication.id }
+        saveMedications()
+    }
+
     private func saveMedications() {
         do {
             let jsonData = try JSONEncoder().encode(self.medications)
-            if let jsonString = String(data: jsonData, encoding: .utf8) {
-                print(jsonString)
-                // Here you can save jsonString to a file or use it as needed
-                // For example, you can save it to UserDefaults or to a file in the app's documents directory
-            }
+            UserDefaults.standard.set(jsonData, forKey: "medications")
         } catch {
             print("Error encoding medications: \(error)")
         }
     }
-    
+
     private func loadMedications() {
-        // Load medications from a JSON file or other storage
-        // For example, you can load from UserDefaults or from a file in the app's documents directory
-        // Here we are just printing a placeholder message
-        print("Loading medications...")
+        if let medicationsData = UserDefaults.standard.data(forKey: "medications") {
+            do {
+                self.medications = try JSONDecoder().decode([Medication].self, from: medicationsData)
+            } catch {
+                print("Error decoding medications: \(error)")
+            }
+        }
     }
-    
-    private func deleteMedication(_ medication: Medication) {
-        self.medications.removeAll { $0.id == medication.id }
-        // save medications after deletion
-        self.saveMedications()
+
+    private func clearInputFields() {
+        name = ""
+        dose = ""
+        selectedDateTime = Date()
+        frequency = .daily
     }
+
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        formatter.dateStyle = .short
+        return formatter
+    }()
 }
 
 struct ContentView_Previews: PreviewProvider {
