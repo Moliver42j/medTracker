@@ -7,6 +7,7 @@ struct Medication: Codable, Identifiable {
     var dose: String
     var frequency: Frequency
     var time: Date
+    var taken: Bool = false
 }
 
 enum Frequency: String, Codable, CaseIterable {
@@ -24,6 +25,7 @@ struct ContentView: View {
     @State private var medications: [Medication] = []
 
     var body: some View {
+        NavigationView {
         VStack {
             Form {
                 Section {
@@ -54,10 +56,15 @@ struct ContentView: View {
                 }
                 List(medications) { medication in
                     VStack(alignment: .leading) {
-                        Text(medication.name).font(.headline)
+                        Text("Name: \(medication.name)").font(.headline)
                         Text("Dose: \(medication.dose)")
                         Text("Frequency: \(medication.frequency.rawValue)")
                         Text("Time: \(medication.time, formatter: dateFormatter)")
+                        if medication.taken {
+                            Text("Taken Today").foregroundColor(.green)
+                        } else {
+                            Text("Not Taken Today").foregroundColor(.red)
+                        }
                     }
                     .swipeActions {
                         Button(role: .destructive) {
@@ -65,9 +72,24 @@ struct ContentView: View {
                         } label: {
                             Label("Delete", systemImage: "trash")
                         }
+                        Button {
+                            markAsTaken(medication)
+                        } label: {
+                            Label("Mark as Taken", systemImage: "checkmark.circle")
+                        }
+                        .tint(.blue)
                     }
                 }
             }
+            NavigationLink(destination: SettingsView()) {
+                    Text("Settings")
+                        .padding()
+                        .foregroundColor(.white)
+                        .background(Color.blue)
+                        .cornerRadius(8)
+                }
+                .padding()
+        }
         }
         .padding()
         .onAppear {
@@ -75,6 +97,7 @@ struct ContentView: View {
             NotificationManager.shared.requestNotificationPermission()
             NotificationManager.shared.addNotificationActions()
         }
+        .navigationBarTitle("Medications")
     }
 
     private func addMedication() {
@@ -106,6 +129,13 @@ struct ContentView: View {
             } catch {
                 print("Error decoding medications: \(error)")
             }
+        }
+    }
+
+    private func markAsTaken(_ medication: Medication) {
+        if let index = self.medications.firstIndex(where: { $0.id == medication.id }) {
+            self.medications[index].taken = true
+            saveMedications()
         }
     }
 
