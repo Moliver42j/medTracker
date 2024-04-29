@@ -8,6 +8,7 @@ struct Medication: Codable, Identifiable {
     var frequency: Frequency
     var time: Date
     var taken: Bool = false
+    var lastTaken: Date?
 }
 
 enum Frequency: String, Codable, CaseIterable {
@@ -60,11 +61,8 @@ struct ContentView: View {
                         Text("Dose: \(medication.dose)")
                         Text("Frequency: \(medication.frequency.rawValue)")
                         Text("Time: \(medication.time, formatter: dateFormatter)")
-                        if medication.taken {
-                            Text("Taken Today").foregroundColor(.green)
-                        } else {
-                            Text("Not Taken Today").foregroundColor(.red)
-                        }
+                        Text("\(medicationTakenToday(medication) ? "Taken Today" : "Not Taken Today")")
+                        .foregroundColor(medicationTakenToday(medication) ? .green : .red)
                     }
                     .swipeActions {
                         Button(role: .destructive) {
@@ -126,15 +124,22 @@ struct ContentView: View {
         if let medicationsData = UserDefaults.standard.data(forKey: "medications") {
             do {
                 self.medications = try JSONDecoder().decode([Medication].self, from: medicationsData)
+                resetTakenStatusIfNeeded()
             } catch {
                 print("Error decoding medications: \(error)")
             }
         }
     }
 
+    private func medicationTakenToday(_ medication: Medication) -> Bool {
+        guard let lastTaken = medication.lastTaken else { return false }
+        return Calendar.current.isDateInToday(lastTaken)
+    }
+
     private func markAsTaken(_ medication: Medication) {
         if let index = self.medications.firstIndex(where: { $0.id == medication.id }) {
             self.medications[index].taken = true
+            self.medications[index].lastTaken = Date()  // Update last taken date
             saveMedications()
         }
     }
@@ -144,6 +149,23 @@ struct ContentView: View {
         dose = ""
         selectedDateTime = Date()
         frequency = .daily
+    }
+
+    private func resetTakenStatusIfNeeded() {
+        let currentDate = Date()
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+
+        let lastAccessDateString = UserDefaults.standard.string(forKey: "lastAccessDate") ?? formatter.string(from: currentDate)
+        let lastAccessDate = formatter.date(from: lastAccessDateString)!
+
+        if !Calendar.current.isDateInToday(lastAccessDate) {
+            for i in medications.indices {
+                medications[i].taken = false
+            }
+            saveMedications()
+            UserDefaults.standard.set(formatter.string(from: currentDate), forKey: "lastAccessDate")
+        }
     }
 
     private let dateFormatter: DateFormatter = {
