@@ -18,43 +18,12 @@ enum Frequency: String, Codable, CaseIterable {
 }
 
 struct ContentView: View {
-    @State private var name: String = ""
-    @State private var dose: String = ""
-    @State private var frequency: Frequency = .daily
-    @State private var selectedDateTime = Date()
-    @State private var howOften: Int = 1
     @State private var medications: [Medication] = []
+    @State private var isAddMedicationViewPresented: Bool = false
 
     var body: some View {
         NavigationView {
-        VStack {
-            Form {
-                Section {
-                    TextField("Name", text: $name)
-                        .textFieldStyle(PlainTextFieldStyle())
-                    TextField("Dose", text: $dose)
-                        .textFieldStyle(PlainTextFieldStyle())
-                    HStack {
-                        Text("Frequency")
-                        Picker("Frequency", selection: $frequency) {
-                            ForEach(Frequency.allCases, id: \.self) { frequency in
-                                Text(frequency.rawValue)
-                            }
-                        }
-                        .pickerStyle(SegmentedPickerStyle())
-                    }
-                    DatePicker("Start Date & Time", selection: $selectedDateTime, displayedComponents: [.date, .hourAndMinute])
-                    Stepper(value: $howOften, in: 1...30) {
-                        Text("How often: \(howOften)")
-                    }
-                }
-                Section {
-                    Button(action: {
-                        addMedication()
-                    }) {
-                        Text("Add Medication")
-                    }
-                }
+            VStack {
                 List(medications) { medication in
                     VStack(alignment: .leading) {
                         Text("Name: \(medication.name)").font(.headline)
@@ -62,7 +31,7 @@ struct ContentView: View {
                         Text("Frequency: \(medication.frequency.rawValue)")
                         Text("Time: \(medication.time, formatter: dateFormatter)")
                         Text("\(medicationTakenToday(medication) ? "Taken Today" : "Not Taken Today")")
-                        .foregroundColor(medicationTakenToday(medication) ? .green : .red)
+                            .foregroundColor(medicationTakenToday(medication) ? .green : .red)
                     }
                     .swipeActions {
                         Button(role: .destructive) {
@@ -78,8 +47,25 @@ struct ContentView: View {
                         .tint(.blue)
                     }
                 }
-            }
-            NavigationLink(destination: SettingsView()) {
+                .listStyle(PlainListStyle())
+
+                Button(action: {
+                    isAddMedicationViewPresented = true
+                }) {
+                    Text("Add Medication")
+                        .padding()
+                        .foregroundColor(.white)
+                        .background(Color.blue)
+                        .cornerRadius(8)
+                }
+                .padding()
+                .sheet(isPresented: $isAddMedicationViewPresented) {
+                    AddMedicationView { newMedication in
+                        addMedication(newMedication)
+                    }
+                }
+
+                NavigationLink(destination: SettingsView()) {
                     Text("Settings")
                         .padding()
                         .foregroundColor(.white)
@@ -87,23 +73,21 @@ struct ContentView: View {
                         .cornerRadius(8)
                 }
                 .padding()
+            }
+            .padding()
+            .onAppear {
+                loadMedications()
+                NotificationManager.shared.requestNotificationPermission()
+                NotificationManager.shared.addNotificationActions()
+            }
+            .navigationBarTitle("Medications")
         }
-        }
-        .padding()
-        .onAppear {
-            loadMedications()
-            NotificationManager.shared.requestNotificationPermission()
-            NotificationManager.shared.addNotificationActions()
-        }
-        .navigationBarTitle("Medications")
     }
 
-    private func addMedication() {
-        let newMedication = Medication(name: self.name, dose: self.dose, frequency: self.frequency, time: self.selectedDateTime)
-        self.medications.append(newMedication)
+    private func addMedication(_ medication: Medication) {
+        self.medications.append(medication)
         saveMedications()
-        NotificationManager.shared.scheduleNotification(for: newMedication)
-        clearInputFields()
+        NotificationManager.shared.scheduleNotification(for: medication)
     }
 
     private func deleteMedication(_ medication: Medication) {
@@ -144,13 +128,6 @@ struct ContentView: View {
         }
     }
 
-    private func clearInputFields() {
-        name = ""
-        dose = ""
-        selectedDateTime = Date()
-        frequency = .daily
-    }
-
     private func resetTakenStatusIfNeeded() {
         let currentDate = Date()
         let formatter = DateFormatter()
@@ -175,6 +152,13 @@ struct ContentView: View {
         return formatter
     }()
 }
+
+//struct SettingsView: View {
+//    var body: some View {
+//        Text("Settings go here")
+//            .navigationBarTitle("Settings", displayMode: .inline)
+//    }
+//}
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {

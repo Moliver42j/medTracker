@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0962F45F2BDD2FD400C0529E /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0962F45E2BDD2FD400C0529E /* NotificationManager.swift */; };
 		0962F4612BDD4E4900C0529E /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0962F4602BDD4E4900C0529E /* SettingsView.swift */; };
+		09CB42BD2C2C6155006C0091 /* AddMedicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09CB42BC2C2C6155006C0091 /* AddMedicationView.swift */; };
 		09ECDD282BD9331700CED910 /* medTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09ECDD272BD9331700CED910 /* medTrackerApp.swift */; };
 		09ECDD2A2BD9331700CED910 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09ECDD292BD9331700CED910 /* ContentView.swift */; };
 		09ECDD2C2BD9331800CED910 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 09ECDD2B2BD9331800CED910 /* Assets.xcassets */; };
@@ -38,6 +39,7 @@
 /* Begin PBXFileReference section */
 		0962F45E2BDD2FD400C0529E /* NotificationManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		0962F4602BDD4E4900C0529E /* SettingsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		09CB42BC2C2C6155006C0091 /* AddMedicationView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AddMedicationView.swift; sourceTree = "<group>"; };
 		09ECDD242BD9331700CED910 /* medTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = medTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		09ECDD272BD9331700CED910 /* medTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = medTrackerApp.swift; sourceTree = "<group>"; };
 		09ECDD292BD9331700CED910 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -98,6 +100,7 @@
 		09ECDD262BD9331700CED910 /* medTracker */ = {
 			isa = PBXGroup;
 			children = (
+				09CB42BC2C2C6155006C0091 /* AddMedicationView.swift */,
 				0962F4602BDD4E4900C0529E /* SettingsView.swift */,
 				09ECDD272BD9331700CED910 /* medTrackerApp.swift */,
 				09ECDD292BD9331700CED910 /* ContentView.swift */,
@@ -264,6 +267,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				09CB42BD2C2C6155006C0091 /* AddMedicationView.swift in Sources */,
 				0962F45F2BDD2FD400C0529E /* NotificationManager.swift in Sources */,
 				0962F4612BDD4E4900C0529E /* SettingsView.swift in Sources */,
 				09ECDD2A2BD9331700CED910 /* ContentView.swift in Sources */,
